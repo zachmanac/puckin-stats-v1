@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Platform, View } from 'react-native';
-import { supabase } from '@/config/supabaseClient';
+// import { supabase } from '@/config/supabaseClient';
 // import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import PlayersTable from '@/components/PlayersTable';
+import { fetchPlayersWithStats } from '@/supabaseCalls/getRequests';
 
 export default function HomeScreen() {
   const [players, setPlayers] = useState<any[]>([]);
@@ -13,17 +14,9 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Function to fetch data from Supabase
-    const fetchPlayers = async () => {
+    const getPlayers = async () => {
       try {
-        const { data, error } = await supabase
-          .from('players')
-          .select('*')
-          .lt('player_id', 8473463);
-
-        if (error) {
-          throw error;
-        }
+        const data = await fetchPlayersWithStats();
         setPlayers(data);
       } catch (error) {
         setError('Failed to fetch data');
@@ -32,7 +25,7 @@ export default function HomeScreen() {
       }
     };
 
-    fetchPlayers();
+    getPlayers();
   }, []);
 
   return (

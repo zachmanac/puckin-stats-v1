@@ -1,9 +1,21 @@
-import { StyleSheet, View, Text } from 'react-native';
+import { ScrollView, StyleSheet, View, Text } from 'react-native';
+
+type PlayerStats = {
+  gamesPlayed: number;
+  goals: number;
+  assists: number;
+  points: number;
+  pointsPerGame: number,
+  shootingPercent: number,
+  shots: number,
+  timeOnIcePerGame: number,
+}
 
 type Player = {
-  player_id: number;
+  playerId: number;
   name: string;
   position: string;
+  playerStats: PlayerStats;
 };
 
 type Props = {
@@ -13,49 +25,84 @@ type Props = {
 export default function PlayersTable({players}: Props) {
 
   return (
-    <View style={styles.container}>
-      {/* Columns */}
-      <View style={styles.row}>
-        <Text style={[styles.cell, styles.header]}>ID</Text>
-        <Text style={[styles.cell, styles.header]}>Name</Text>
-        <Text style={[styles.cell, styles.header, styles.position]}>Position</Text>
-      </View>
-
-      {/* Rows */}
-      {players.map((player: Player, index: number) => (
-        <View key={index} style={styles.row}>
-          <Text style={styles.cell}>{player.player_id}</Text>
-          <Text style={styles.cell}>{player.name}</Text>
-          <Text style={[styles.cell, styles.position]}>{player.position}</Text>
+    <ScrollView horizontal style={styles.tableContainer}>
+      <View style={styles.table}>
+        {/* Columns */}
+        <View style={[styles.row, styles.header]}>
+          {/* ID IS PLACEHOLDER FOR CHECKBOX */}
+          <Text style={[styles.cell, styles.cellId]}>Id</Text>
+          <Text style={[styles.cell, styles.cellName]}>Name</Text>
+          <Text style={[styles.cell, styles.cellStats]}>projected</Text>
+          <Text style={[styles.cell, styles.cellPosition]}>Pos</Text>
+          <Text style={[styles.cell, styles.cellStats]}>GP</Text>
+          <Text style={[styles.cell, styles.cellStats]}>G</Text>
+          <Text style={[styles.cell, styles.cellStats]}>A</Text>
+          <Text style={[styles.cell, styles.cellStats]}>Pts</Text>
+          <Text style={[styles.cell, styles.cellStats]}>Pts/PG</Text>
+          <Text style={[styles.cell, styles.cellStats]}>Shots</Text>
+          <Text style={[styles.cell, styles.cellStats]}>Shot %</Text>
+          <Text style={[styles.cell, styles.cellStats]}>TOI</Text>
         </View>
-      ))}
-    </View>
+
+        {/* Rows */}
+        {players.map((player: Player, index: number) => (
+          <View key={index} style={styles.row}>
+            <Text style={[styles.cell, styles.cellId]}>{player.playerId}</Text>
+            <Text style={[styles.cell, styles.cellName]}>{player.name}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>projected</Text>
+            <Text style={[styles.cell, styles.cellPosition]}>{player.position}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shots}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shootingPercent.toFixed(2)}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.timeOnIcePerGame.toFixed(2)}</Text>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  tableContainer: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  table: {
+    flexDirection: 'column',
   },
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: 'gray',
+    paddingHorizontal: 8,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cell: {
     flex: 1,
     textAlign: 'left',
-    fontSize: 16,
+    fontSize: 12,
   },
   header: {
     fontWeight: 'bold',
+    height: 50,
     backgroundColor: '#f0f0f0',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
   },
-  position: {
-    width: 50,
-    textAlign: 'center',
+  cellId: {
+    width: 80,
+  },
+  cellName: {
+    width: 120,
+  },
+  cellPosition: {
+    width: 25,
+  },
+  cellStats: {
+    width: 25,
   },
 });
