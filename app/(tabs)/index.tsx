@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Platform, View } from 'react-native';
 import { supabase } from '@/config/supabaseClient';
-import { HelloWave } from '@/components/HelloWave';
+// import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import PlayersTable from '@/components/PlayersTable';
 
 export default function HomeScreen() {
   const [players, setPlayers] = useState<any[]>([]);
@@ -37,28 +38,31 @@ export default function HomeScreen() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
+      // headerImage={
+      //   <Image
+      //     source={require('@/assets/images/partial-react-logo.png')}
+      //     style={styles.reactLogo}
+      //   />
+      // }
+    >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
+        {/* <HelloWave /> */}
       </ThemedView>
       {loading && <ThemedText>Loading...</ThemedText>}
       {error && <ThemedText>{error}</ThemedText>}
       {!loading && !error && (
         <ThemedView style={styles.stepContainer}>
           <ThemedText type="subtitle">Fetched Data: count: {players.length}</ThemedText>
-          {players.slice(0, 500).map((item: any, index: number) => (
+          {/* {players.slice(0, 500).map((item: any, index: number) => (
             <ThemedText key={index}>{JSON.stringify(item)}</ThemedText>
-          ))}
+          ))} */}
+          <PlayersTable players={players} />
         </ThemedView>
       )}
     </ParallaxScrollView>
   );
+
   // return (
   //   <ParallaxScrollView
   //     headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
