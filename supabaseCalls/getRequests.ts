@@ -1,6 +1,6 @@
 import { supabase } from '@/config/supabaseClient';
 
-export const fetchPlayersWithStats = async (limit: number = 15) => {
+export const fetchPlayersWithStats = async (limit: number = 30) => {
   const { data, error } = await supabase
   .from('player_stats')
   .select(`

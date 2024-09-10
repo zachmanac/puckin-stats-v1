@@ -17,3 +17,8 @@ export type Player = {
   position: string;
   playerStats: PlayerStats;
 };
+
+export type CheckboxProps = {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+};
