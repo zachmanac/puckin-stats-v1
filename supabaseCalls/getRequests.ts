@@ -1,19 +1,5 @@
 import { supabase } from '@/config/supabaseClient';
 
-export const fetchPlayers = async (limit: number = 500) => {
-  const { data, error } = await supabase
-    .from('players')
-    .select('*')
-    .limit(limit);
-
-  if (error) {
-    console.error('Error fetching players:', error);
-    return [];
-  }
-  
-  return data;
-};
-
 export const fetchPlayersWithStats = async (limit: number = 15) => {
   const { data, error } = await supabase
   .from('player_stats')
@@ -27,6 +13,8 @@ export const fetchPlayersWithStats = async (limit: number = 15) => {
     shooting_percent,
     shots,
     time_on_ice_per_game,
+    game_winning_goals,
+    sh_goals,
     players (name, position)
   `)
   .eq('season_id', 20222023)
@@ -40,7 +28,8 @@ export const fetchPlayersWithStats = async (limit: number = 15) => {
   // restructure the data so stats are nested under the player 
   const transformedData = data.map((item: any) => ({
     playerId: item.player_id,
-    ...item.players,
+    name: item.players.name,
+    position: item.players.position,
     playerStats: { 
       gamesPlayed: item.games_played,
       goals: item.goals,
@@ -50,6 +39,8 @@ export const fetchPlayersWithStats = async (limit: number = 15) => {
       shootingPercent: item.shooting_percent,
       shots: item.shots,
       timeOnIcePerGame: item.time_on_ice_per_game,
+      gameWinningGoals: item.game_winning_goals,
+      shortHandedGoals: item.sh_goals,
     },
   }));
 

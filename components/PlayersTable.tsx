@@ -1,28 +1,7 @@
 import { ScrollView, StyleSheet, View, Text } from 'react-native';
+import { Player } from '@/types';
 
-type PlayerStats = {
-  gamesPlayed: number;
-  goals: number;
-  assists: number;
-  points: number;
-  pointsPerGame: number,
-  shootingPercent: number,
-  shots: number,
-  timeOnIcePerGame: number,
-}
-
-type Player = {
-  playerId: number;
-  name: string;
-  position: string;
-  playerStats: PlayerStats;
-};
-
-type Props = {
-  players: Player[];
-};
-
-export default function PlayersTable({players}: Props) {
+export default function PlayersTable({ players }: { players: any[] }) {
 
   return (
     <ScrollView horizontal style={styles.tableContainer}>
@@ -33,15 +12,17 @@ export default function PlayersTable({players}: Props) {
           <Text style={[styles.cell, styles.cellId]}>Id</Text>
           <Text style={[styles.cell, styles.cellName]}>Name</Text>
           <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-          <Text style={[styles.cell, styles.cellPosition]}>Pos</Text>
+          <Text style={[styles.cell, styles.cellStats]}>Pos</Text>
           <Text style={[styles.cell, styles.cellStats]}>GP</Text>
           <Text style={[styles.cell, styles.cellStats]}>G</Text>
           <Text style={[styles.cell, styles.cellStats]}>A</Text>
           <Text style={[styles.cell, styles.cellStats]}>Pts</Text>
           <Text style={[styles.cell, styles.cellStats]}>Pts/PG</Text>
-          <Text style={[styles.cell, styles.cellStats]}>Shots</Text>
-          <Text style={[styles.cell, styles.cellStats]}>Shot %</Text>
-          <Text style={[styles.cell, styles.cellStats]}>TOI</Text>
+          <Text style={[styles.cell, styles.cellLongNumbers]}>Shots</Text>
+          <Text style={[styles.cell, styles.cellLongNumbers]}>Shot %</Text>
+          <Text style={[styles.cell, styles.cellLongNumbers]}>TOI</Text>
+          <Text style={[styles.cell, styles.cellStats]}>SHG</Text>
+          <Text style={[styles.cell, styles.cellStats]}>GWG</Text>
         </View>
 
         {/* Rows */}
@@ -50,15 +31,22 @@ export default function PlayersTable({players}: Props) {
             <Text style={[styles.cell, styles.cellId]}>{player.playerId}</Text>
             <Text style={[styles.cell, styles.cellName]}>{player.name}</Text>
             <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-            <Text style={[styles.cell, styles.cellPosition]}>{player.position}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.position}</Text>
             <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</Text>
             <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</Text>
             <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</Text>
             <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</Text>
             <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</Text>
-            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shots}</Text>
-            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shootingPercent.toFixed(2)}</Text>
-            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.timeOnIcePerGame.toFixed(2)}</Text>
+            <Text style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</Text>
+            <Text style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</Text>
+            <Text style={[styles.cell, styles.cellLongNumbers]}>
+              {/* minutes */}
+              {Math.floor(player.playerStats.timeOnIcePerGame / 60)}:
+              {/* seconds */}
+              {String(Math.round((player.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
+            </Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</Text>
+            <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</Text>
           </View>
         ))}
       </View>
@@ -95,14 +83,17 @@ const styles = StyleSheet.create({
   },
   cellId: {
     width: 80,
+    textAlign: 'center',
   },
   cellName: {
     width: 120,
   },
-  cellPosition: {
-    width: 25,
-  },
   cellStats: {
-    width: 25,
+    width: 30,
+    textAlign: 'center',
+  },
+  cellLongNumbers: {
+    width: 35,
+    textAlign: 'center',
   },
 });
