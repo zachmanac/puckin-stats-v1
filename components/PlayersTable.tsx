@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View, Text, Pressable } from 'react-native';
 import { Player } from '@/types';
 import Checkbox from './Checkbox';
+import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
+import { ThemedText } from './ThemedText';
+import { ThemedView } from './ThemedView';
 
 export default function PlayersTable({ players }: { players: Player[] }) {
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
   const [hiddenPlayers, setHiddenPlayers] = useState<number[]>([]);
+
+  const { addPlayerToTeam, team } = useTeamContext();
 
   const handleCheckboxChange = (playerId: number) => {
     setSelectedPlayers((prevSelected) =>
@@ -24,73 +29,84 @@ export default function PlayersTable({ players }: { players: Player[] }) {
     setHiddenPlayers([]);
   };
 
+  const addSelectedPlayersToTeam = async () => {
+    for (const playerId of selectedPlayers) {
+      await addPlayerToTeam(playerId); // Send the player to the team context
+    }
+    setHiddenPlayers([...hiddenPlayers, ...selectedPlayers]);
+    setSelectedPlayers([]);
+  };
+
   const filteredPlayers = players.filter((player) => !hiddenPlayers.includes(player.playerId));
 
   return (
     <View>
       {selectedPlayers.length > 0 && (
-        <View style={styles.dropdownMenu}>
+        <ThemedView style={styles.dropdownMenu}>
           <Pressable onPress={removeSelectedPlayers} style={styles.menuButton}>
-            <Text style={styles.menuButtonText}>Remove Selected</Text>
+            <ThemedText style={styles.menuButtonText}>Remove Selected</ThemedText>
           </Pressable>
-        </View>
+          <Pressable onPress={addSelectedPlayersToTeam} style={styles.menuButton}>
+            <ThemedText style={styles.menuButtonText}>Add to Team</ThemedText>
+          </Pressable>
+        </ThemedView>
       )}
       {selectedPlayers.length === 0 && hiddenPlayers.length > 0 && (
-        <View style={styles.dropdownMenu}>
+        <ThemedView style={styles.dropdownMenu}>
           <Pressable style={styles.menuButton} onPress={unhideAllPlayers}>
             <Text style={styles.menuButtonText}>Unhide All Players</Text>
           </Pressable>
-        </View>
+        </ThemedView>
       )}
 
       <ScrollView horizontal style={styles.tableContainer}>
         {/* Columns */}
-        <View style={styles.table}>
-          <View style={[styles.row, styles.header]}>
-            <Text style={[styles.cell, styles.cellId]}>{/* checkbox header*/}</Text>
-            <Text style={[styles.cell, styles.cellName]}>Name</Text>
-            <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pos</Text>
-            <Text style={[styles.cell, styles.cellStats]}>GP</Text>
-            <Text style={[styles.cell, styles.cellStats]}>G</Text>
-            <Text style={[styles.cell, styles.cellStats]}>A</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pts</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pts/PG</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>Shots</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>Shot %</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>TOI</Text>
-            <Text style={[styles.cell, styles.cellStats]}>SHG</Text>
-            <Text style={[styles.cell, styles.cellStats]}>GWG</Text>
-          </View>
+        <ThemedView style={styles.table}>
+          <ThemedView style={[styles.row, styles.header]}>
+            <ThemedText style={[styles.cell, styles.cellId, styles.headerText]}>{/* checkbox header*/}</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>projected</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GP</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>G</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>A</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts/PG</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shots</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shot %</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>TOI</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>SHG</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GWG</ThemedText>
+          </ThemedView>
 
           {/* Rows */}
           {filteredPlayers.map((player: Player, index: number) => (
-            <View key={index} style={[styles.row, selectedPlayers.includes(player.playerId) && styles.selectedRow]}>
+            <ThemedView key={index} style={[styles.row, selectedPlayers.includes(player.playerId) && styles.selectedRow]}>
               <Checkbox
                 checked={selectedPlayers.includes(player.playerId)}
                 onChange={() => handleCheckboxChange(player.playerId)}
               />
-              <Text style={[styles.cell, styles.cellName]}>{player.name}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.position}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>
+              <ThemedText style={[styles.cell, styles.cellName]}>{player.name}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.position}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>
                 {/* minutes */}
                 {Math.floor(player.playerStats.timeOnIcePerGame / 60)}:
                 {/* seconds */}
                 {String(Math.round((player.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
-              </Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</Text>
-            </View>
+              </ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</ThemedText>
+            </ThemedView>
           ))}
-        </View>
+        </ThemedView>
       </ScrollView>
     </View>
   );
@@ -121,7 +137,9 @@ const styles = StyleSheet.create({
   header: {
     fontWeight: 'bold',
     height: 50,
-    backgroundColor: '#f0f0f0',
+  },
+  headerText: {
+    lineHeight: 15,
   },
   cellId: {
     width: 20,
@@ -143,25 +161,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'gray',
   },
   dropdownMenu: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
+    flexDirection: 'row',
     backgroundColor: '#007bff',
-    zIndex: 1,
     borderBottomColor: '#ccc',
     borderBottomWidth: 1,
-    alignContent: 'center'
+    alignContent: 'center',
+    justifyContent: 'space-evenly',
+    height: 50,
   },
   menuButton: {
     backgroundColor: 'gray',
-    padding: 10,
     width: 150,
     alignSelf: 'center',
+    justifyContent: 'center',
+    height: '70%',
+    borderRadius: 10,
   },
   menuButtonText: {
     color: '#fff',
     textAlign: 'center',
+    padding: 5,
   },
   
 });

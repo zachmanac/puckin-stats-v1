@@ -31,14 +31,14 @@ export default function HomeScreen() {
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
     >
-      <ThemedView style={styles.titleContainer}>
+      {/* <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView>
+      </ThemedView> */}
       {loading && <ThemedText>Loading...</ThemedText>}
       {error && <ThemedText>{error}</ThemedText>}
       {!loading && !error && (
         <ThemedView style={styles.stepContainer}>
-          <ThemedText type="subtitle">Fetched Data: count: {players.length}</ThemedText>
+          {/* <ThemedText type="subtitle">Fetched Data: count: {players.length}</ThemedText> */}
           <PlayersTable players={players} />
         </ThemedView>
       )}

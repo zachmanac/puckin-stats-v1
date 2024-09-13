@@ -1,9 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Player } from '@/types';
+import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
+import { fetchPlayerIdsFromTeam, fetchTeamWithStats } from '@/supabaseCalls/getRequests';
 
 const UserTeamTab = () => {
   const [players, setPlayers] = useState<Player[]>([]);
+
+  const { team } = useTeamContext();
+
+  useEffect(() => {
+    const fetchTeam = async () => {
+      try {
+        const playerIds = await fetchPlayerIdsFromTeam();
+        const data = await fetchTeamWithStats(playerIds);
+        setPlayers(data);
+      } catch (error) {
+        console.error('Failed to fetch data: ', error);
+      }
+    };
+
+    fetchTeam();
+  }, [team]);
+
 
   return (
     <View style={styles.container}>
