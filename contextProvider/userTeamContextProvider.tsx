@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { supabase } from '@/config/supabaseClient';
+import { fetchTeam } from '@/supabaseCalls/getRequests';
+import { addPlayerToTeamDB, removePlayerFromTeamDB } from '@/supabaseCalls/postRequests';
 
 interface TeamContextType {
   team: number[]; // Array of player IDs
   addPlayerToTeam: (playerId: number) => Promise<void>;
   removePlayerFromTeam: (playerId: number) => Promise<void>;
-  fetchTeam: () => Promise<void>;
+  fetchTeam: () => Promise<number[]>;
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
@@ -14,50 +15,34 @@ interface TeamProviderProps {
   children: ReactNode;
 }
 
-export const TeamContextProvider = ({ children }: TeamProviderProps): JSX.Element => {
+export const TeamContextProvider = ({ children }: TeamProviderProps): React.JSX.Element => {
   const [team, setTeam] = useState<number[]>([]); // Array of player IDs
 
-  const fetchTeam = async () => {
-    const { data, error } = await supabase
-      .from('user_teams')
-      .select('player_id');
-
-    if (error) {
-      console.error('Error fetching team:', error);
-    } else {
-      setTeam(data.map((row) => row.player_id));
-    }
+  const fetchTeamData = async () => {
+    const playerIds = await fetchTeam();
+    setTeam(playerIds);
   };
 
-  // Add a player to the team
   const addPlayerToTeam = async (playerId: number) => {
-    const { error } = await supabase
-      .from('user_teams')
-      .insert([{ player_id: playerId }]);
-
-    if (error) {
-      console.error('Error adding player:', error);
-    } else {
+    const success = await addPlayerToTeamDB(playerId);
+    if (success) {
       setTeam((prevTeam) => [...prevTeam, playerId]);
+    } else {
+      console.error(`Failed to add player with ID ${playerId}`);
     }
   };
 
-  // Remove a player from the team
   const removePlayerFromTeam = async (playerId: number) => {
-    const { error } = await supabase
-      .from('user_teams')
-      .delete()
-      .eq('player_id', playerId);
-
-    if (error) {
-      console.error('Error removing player:', error);
-    } else {
+    const success = await removePlayerFromTeamDB(playerId);
+    if (success) {
       setTeam((prevTeam) => prevTeam.filter((id) => id !== playerId));
+    } else {
+      console.error(`Failed to remove player with ID ${playerId}`);
     }
   };
 
   useEffect(() => {
-    fetchTeam(); // Fetch the team when the component mounts
+    fetchTeamData();
   }, []);
 
   return (
@@ -67,7 +52,6 @@ export const TeamContextProvider = ({ children }: TeamProviderProps): JSX.Elemen
   );
 };
 
-// Custom hook for accessing the team context
 export const useTeamContext = (): TeamContextType => {
   const context = useContext(TeamContext);
   if (context === undefined) {

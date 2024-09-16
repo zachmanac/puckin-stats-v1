@@ -3,6 +3,8 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Player } from '@/types';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { fetchPlayerIdsFromTeam, fetchTeamWithStats } from '@/supabaseCalls/getRequests';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 
 const UserTeamTab = () => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -25,52 +27,52 @@ const UserTeamTab = () => {
 
 
   return (
-    <View style={styles.container}>
+    <ThemedView style={styles.container}>
       <ScrollView horizontal style={styles.tableContainer}>
         {/* Columns */}
-        <View style={styles.table}>
-          <View style={[styles.row, styles.header]}>
-            <Text style={[styles.cell, styles.cellName]}>Name</Text>
-            <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pos</Text>
-            <Text style={[styles.cell, styles.cellStats]}>GP</Text>
-            <Text style={[styles.cell, styles.cellStats]}>G</Text>
-            <Text style={[styles.cell, styles.cellStats]}>A</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pts</Text>
-            <Text style={[styles.cell, styles.cellStats]}>Pts/PG</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>Shots</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>Shot %</Text>
-            <Text style={[styles.cell, styles.cellLongNumbers]}>TOI</Text>
-            <Text style={[styles.cell, styles.cellStats]}>SHG</Text>
-            <Text style={[styles.cell, styles.cellStats]}>GWG</Text>
-          </View>
+        <ThemedView style={styles.table}>
+          <ThemedView style={[styles.row, styles.header]}>
+            <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>projected</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GP</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>G</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>A</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts/PG</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shots</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shot %</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>TOI</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>SHG</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GWG</ThemedText>
+          </ThemedView>
 
           {/* Rows */}
           {players.map((player: Player, index: number) => (
-            <View key={index} style={styles.row}>
-              <Text style={[styles.cell, styles.cellName]}>{player.name}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>projected</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.position}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</Text>
-              <Text style={[styles.cell, styles.cellLongNumbers]}>
+            <ThemedView key={index} style={styles.row}>
+              <ThemedText style={[styles.cell, styles.cellName]}>{player.name}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.position}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>
                 {/* minutes */}
                 {Math.floor(player.playerStats.timeOnIcePerGame / 60)}:
                 {/* seconds */}
                 {String(Math.round((player.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
-              </Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</Text>
-              <Text style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</Text>
-            </View>
+              </ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</ThemedText>
+              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</ThemedText>
+            </ThemedView>
           ))}
-        </View>
+        </ThemedView>
       </ScrollView>
-    </View>
+    </ThemedView>
   );
 };
 
@@ -103,7 +105,9 @@ const styles = StyleSheet.create({
   header: {
     fontWeight: 'bold',
     height: 50,
-    backgroundColor: '#f0f0f0',
+  },
+  headerText: {
+    lineHeight: 15,
   },
   cellId: {
     width: 20,
