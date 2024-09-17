@@ -1,7 +1,13 @@
 import { supabase } from '@/config/supabaseClient';
 
-export const fetchPlayersWithStats = async (limit: number = 30) => {
-  const { data, error } = await supabase
+export const fetchPlayersWithStats = async (start: number = 0, end: number) => {
+
+  if (start < 0 || end < start) {
+    console.error('Invalid range:', { start, end });
+    return { players: [], count: 0 };
+  }
+
+  const { data, error, count } = await supabase
   .from('player_stats')
   .select(`
     player_id,
@@ -16,13 +22,13 @@ export const fetchPlayersWithStats = async (limit: number = 30) => {
     game_winning_goals,
     sh_goals,
     players (name, position)
-  `)
+  `, { count: 'exact' })
   .eq('season_id', 20222023)
-  .limit(limit);
+  .range(start, end);
   
   if (error) {
     console.error('Error fetching player stats:', error);
-    return [];
+    return { players: [], count: 0 };
   }
 
   // restructure the data so stats are nested under the player 
@@ -44,7 +50,7 @@ export const fetchPlayersWithStats = async (limit: number = 30) => {
     },
   }));
 
-  return transformedData;
+  return { players: transformedData || [], count: count || 0 };
 };
 
 export const fetchPlayerIdsFromTeam = async () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, StyleSheet, Platform, View } from 'react-native';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -9,37 +9,62 @@ import { Player } from '@/types';
 
 export default function HomeScreen() {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [totalPlayers, setTotalPlayers] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hiddenPlayers, setHiddenPlayers] = useState<number[]>([]);
+
+  const pageSize = 15;
+
+  const fetchPlayers = async (page: number, pageSize: number) => {
+    setLoading(true);
+    try {
+      const { players: newPlayers, count } = await fetchPlayersWithStats((page - 1) * pageSize, page * pageSize - 1);
+      setPlayers(newPlayers);
+      setTotalPlayers(count);
+    } catch (error) {
+      setError('Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const getPlayers = async () => {
-      try {
-        const data = await fetchPlayersWithStats();
-        setPlayers(data);
-      } catch (error) {
-        setError('Failed to fetch data');
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchPlayers(currentPage, pageSize);
+  }, [currentPage]);
 
-    getPlayers();
-  }, []);
+  if (loading) {
+    return (
+      <View style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.centeredContainer}>
+        <ThemedText>{error}</ThemedText>
+      </View>
+    );
+  }
 
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
     >
-      {/* <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView> */}
-      {loading && <ThemedText>Loading...</ThemedText>}
-      {error && <ThemedText>{error}</ThemedText>}
       {!loading && !error && (
-        <ThemedView style={styles.stepContainer}>
-          {/* <ThemedText type="subtitle">Fetched Data: count: {players.length}</ThemedText> */}
-          <PlayersTable players={players} />
+        <ThemedView>
+          <PlayersTable
+            players={players}
+            totalPlayers={totalPlayers}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            hiddenPlayers={hiddenPlayers}
+            setHiddenPlayers={setHiddenPlayers}
+          />
         </ThemedView>
       )}
     </ParallaxScrollView>
@@ -47,13 +72,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
   },
 });

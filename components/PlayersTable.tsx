@@ -1,16 +1,35 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, Text, Pressable } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { ScrollView, View, Pressable, FlatList, StyleSheet } from 'react-native';
 import { Player } from '@/types';
 import Checkbox from './Checkbox';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 
-export default function PlayersTable({ players }: { players: Player[] }) {
-  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
-  const [hiddenPlayers, setHiddenPlayers] = useState<number[]>([]);
+type PlayersTableProps = {
+  players: Player[];
+  totalPlayers: number;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  hiddenPlayers: number[];
+  setHiddenPlayers: (hiddenPlayers: number[]) => void;
+};
 
-  const { addPlayerToTeam, team } = useTeamContext();
+export default function PlayersTable({
+  players,
+  totalPlayers,
+  currentPage,
+  pageSize,
+  onPageChange,
+  hiddenPlayers,
+  setHiddenPlayers,
+}: PlayersTableProps) {
+  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
+
+  const totalPages = Math.ceil(totalPlayers / pageSize);
+
+  const { addPlayerToTeam } = useTeamContext();
 
   const handleCheckboxChange = (playerId: number) => {
     setSelectedPlayers((prevSelected) =>
@@ -37,16 +56,50 @@ export default function PlayersTable({ players }: { players: Player[] }) {
     setSelectedPlayers([]);
   };
 
-  const filteredPlayers = players.filter((player) => !hiddenPlayers.includes(player.playerId));
+  const filteredPlayers = useMemo(() => {
+    return players.filter((player) => !hiddenPlayers.includes(player.playerId));
+  }, [players, hiddenPlayers]);
+
+  const renderItem = useCallback(({ item }: { item: Player }) => (
+    <ThemedView
+      style={[
+        styles.row,
+        selectedPlayers.includes(item.playerId) && styles.selectedRow
+        ]}
+    >
+      <Checkbox
+        checked={selectedPlayers.includes(item.playerId)}
+        onChange={() => handleCheckboxChange(item.playerId)}
+      />
+      <ThemedText style={[styles.cell, styles.cellName]}>{item.name}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.position}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.gamesPlayed}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.goals}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.assists}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.points}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.pointsPerGame.toFixed(2)}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{item.playerStats.shots}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{(item.playerStats.shootingPercent * 100).toFixed(2)}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>
+        {/* Minutes */}
+        {Math.floor(item.playerStats.timeOnIcePerGame / 60)}:
+        {/* Seconds */}
+        {String(Math.round((item.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
+      </ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.shortHandedGoals}</ThemedText>
+      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.gameWinningGoals}</ThemedText>
+    </ThemedView>
+  ), [selectedPlayers, handleCheckboxChange, hiddenPlayers]);
 
   return (
     <View>
       {selectedPlayers.length > 0 && (
         <ThemedView style={styles.dropdownMenu}>
-          <Pressable onPress={removeSelectedPlayers} style={styles.menuButton}>
+          <Pressable style={styles.menuButton} onPress={removeSelectedPlayers}>
             <ThemedText style={styles.menuButtonText}>Remove Selected</ThemedText>
           </Pressable>
-          <Pressable onPress={addSelectedPlayersToTeam} style={styles.menuButton}>
+          <Pressable style={styles.menuButton} onPress={addSelectedPlayersToTeam}>
             <ThemedText style={styles.menuButtonText}>Add to Team</ThemedText>
           </Pressable>
         </ThemedView>
@@ -54,7 +107,7 @@ export default function PlayersTable({ players }: { players: Player[] }) {
       {selectedPlayers.length === 0 && hiddenPlayers.length > 0 && (
         <ThemedView style={styles.dropdownMenu}>
           <Pressable style={styles.menuButton} onPress={unhideAllPlayers}>
-            <Text style={styles.menuButtonText}>Unhide All Players</Text>
+            <ThemedText style={styles.menuButtonText}>Unhide All Players</ThemedText>
           </Pressable>
         </ThemedView>
       )}
@@ -80,34 +133,26 @@ export default function PlayersTable({ players }: { players: Player[] }) {
           </ThemedView>
 
           {/* Rows */}
-          {filteredPlayers.map((player: Player, index: number) => (
-            <ThemedView key={index} style={[styles.row, selectedPlayers.includes(player.playerId) && styles.selectedRow]}>
-              <Checkbox
-                checked={selectedPlayers.includes(player.playerId)}
-                onChange={() => handleCheckboxChange(player.playerId)}
-              />
-              <ThemedText style={[styles.cell, styles.cellName]}>{player.name}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.position}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.assists}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.points}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.pointsPerGame.toFixed(2)}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{player.playerStats.shots}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{(player.playerStats.shootingPercent * 100).toFixed(2)}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellLongNumbers]}>
-                {/* minutes */}
-                {Math.floor(player.playerStats.timeOnIcePerGame / 60)}:
-                {/* seconds */}
-                {String(Math.round((player.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
-              </ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.shortHandedGoals}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gameWinningGoals}</ThemedText>
-            </ThemedView>
-          ))}
+          <FlatList
+            data={filteredPlayers}
+            renderItem={renderItem}
+            keyExtractor={item => item.playerId.toString()}
+            ListEmptyComponent={<ThemedText>No players available.</ThemedText>}
+            initialNumToRender={15}
+          />
         </ThemedView>
       </ScrollView>
+
+      {/* Pagination */}
+      <ThemedView style={styles.pagination}>
+        <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
+          <ThemedText>Previous</ThemedText>
+        </Pressable>
+        <ThemedText>{currentPage} / {totalPages}</ThemedText>
+        <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.min(currentPage + 1, totalPages))} disabled={currentPage === totalPages}>
+          <ThemedText>Next</ThemedText>
+        </Pressable>
+      </ThemedView>
     </View>
   );
 }
@@ -182,5 +227,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 5,
   },
-  
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+  },
+  paginationButton: {
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
