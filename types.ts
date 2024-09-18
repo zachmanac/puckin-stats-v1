@@ -22,3 +22,10 @@ export type CheckboxProps = {
   checked: boolean;
   onChange: (checked: boolean) => void;
 };
+
+export type Modifiers = {
+  goalModifier: string | number;
+  assistModifier: string | number;
+  GWGModifier: string | number;
+  SHGModifier: string | number;
+};

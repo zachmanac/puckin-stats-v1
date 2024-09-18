@@ -24,6 +24,7 @@ export const fetchPlayersWithStats = async (start: number = 0, end: number) => {
     players (name, position)
   `, { count: 'exact' })
   .eq('season_id', 20222023)
+  .order('points', { ascending: false })
   .range(start, end);
   
   if (error) {

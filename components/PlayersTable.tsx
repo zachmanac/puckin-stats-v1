@@ -5,6 +5,7 @@ import Checkbox from './Checkbox';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
 
 type PlayersTableProps = {
   players: Player[];
@@ -26,6 +27,10 @@ export default function PlayersTable({
   setHiddenPlayers,
 }: PlayersTableProps) {
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
+  const [modifiersActive, setModifiersActive] = useState<boolean>(true);
+
+  const { modifiers } = useModifiersContext();
+
 
   const totalPages = Math.ceil(totalPlayers / pageSize);
 
@@ -60,37 +65,52 @@ export default function PlayersTable({
     return players.filter((player) => !hiddenPlayers.includes(player.playerId));
   }, [players, hiddenPlayers]);
 
-  const renderItem = useCallback(({ item }: { item: Player }) => (
-    <ThemedView
-      style={[
-        styles.row,
-        selectedPlayers.includes(item.playerId) && styles.selectedRow
-        ]}
-    >
-      <Checkbox
-        checked={selectedPlayers.includes(item.playerId)}
-        onChange={() => handleCheckboxChange(item.playerId)}
-      />
-      <ThemedText style={[styles.cell, styles.cellName]}>{item.name}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.position}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.gamesPlayed}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.goals}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.assists}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.points}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.pointsPerGame.toFixed(2)}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{item.playerStats.shots}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{(item.playerStats.shootingPercent * 100).toFixed(2)}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellLongNumbers]}>
-        {/* Minutes */}
-        {Math.floor(item.playerStats.timeOnIcePerGame / 60)}:
-        {/* Seconds */}
-        {String(Math.round((item.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0')}
-      </ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.shortHandedGoals}</ThemedText>
-      <ThemedText style={[styles.cell, styles.cellStats]}>{item.playerStats.gameWinningGoals}</ThemedText>
-    </ThemedView>
-  ), [selectedPlayers, handleCheckboxChange, hiddenPlayers]);
+  // Renders individual player row
+  const renderPlayer = useCallback(({ item }: { item: Player }) => {
+    const { goalModifier, assistModifier, SHGModifier, GWGModifier } = modifiers;
+
+    const gamesPlayed = item.playerStats.gamesPlayed;
+
+    const structuredGoals = Math.round(item.playerStats.goals * (modifiersActive ? parseFloat(goalModifier.toString()) : 1));
+    const structuredAssists = Math.round(item.playerStats.assists * (modifiersActive ? parseFloat(assistModifier.toString()) : 1));
+    const structuredPoints = structuredGoals + structuredAssists;
+    const structuredPointsPerGame = item.playerStats.pointsPerGame.toFixed(2);
+    const structuredShootingPercent = (item.playerStats.shootingPercent * 100).toFixed(2);
+    const structuredMinutes = Math.floor(item.playerStats.timeOnIcePerGame / 60);
+    const structuredSeconds = String(Math.round((item.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0');
+    const structuredSHG = Math.round(item.playerStats.shortHandedGoals * (modifiersActive ? parseFloat(SHGModifier.toString()) : 1));
+    const structuredGWG = Math.round(item.playerStats.gameWinningGoals * (modifiersActive ? parseFloat(GWGModifier.toString()) : 1));
+
+    // Projected column calculation, based off of 82 games played
+    const gamesProrated = gamesPlayed > 0 ? (82 / gamesPlayed) : 1;
+    const projectedGoals = structuredGoals * gamesProrated;
+    const projectedAssists = structuredAssists * gamesProrated;
+    const projectedSHG = structuredSHG * gamesProrated;
+    const projectedGWG = structuredGWG * gamesProrated;
+    const projectedStats =  Math.round(projectedGoals + projectedAssists + projectedSHG + projectedGWG)
+
+    return (
+      <ThemedView style={[styles.row, selectedPlayers.includes(item.playerId) && styles.selectedRow]}>
+        <Checkbox
+          checked={selectedPlayers.includes(item.playerId)}
+          onChange={() => handleCheckboxChange(item.playerId)}
+        />
+        <ThemedText style={[styles.cell, styles.cellName]}>{item.name}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{projectedStats}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{item.position}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{gamesPlayed}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGoals}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredAssists}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPoints}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPointsPerGame}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{item.playerStats.shots}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredShootingPercent}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredMinutes}:{structuredSeconds}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredSHG}</ThemedText>
+        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGWG}</ThemedText>
+      </ThemedView>
+    );
+  }, [selectedPlayers, handleCheckboxChange, hiddenPlayers, modifiers]);
 
   return (
     <View>
@@ -118,7 +138,7 @@ export default function PlayersTable({
           <ThemedView style={[styles.row, styles.header]}>
             <ThemedText style={[styles.cell, styles.cellId, styles.headerText]}>{/* checkbox header*/}</ThemedText>
             <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
-            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>projected</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Proj. Stats</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GP</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>G</ThemedText>
@@ -135,7 +155,7 @@ export default function PlayersTable({
           {/* Rows */}
           <FlatList
             data={filteredPlayers}
-            renderItem={renderItem}
+            renderItem={renderPlayer}
             keyExtractor={item => item.playerId.toString()}
             ListEmptyComponent={<ThemedText>No players available.</ThemedText>}
             initialNumToRender={15}
@@ -148,9 +168,17 @@ export default function PlayersTable({
         <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
           <ThemedText>Previous</ThemedText>
         </Pressable>
-        <ThemedText>{currentPage} / {totalPages}</ThemedText>
+        <ThemedText style={styles.paginationButton}>{currentPage} / {totalPages}</ThemedText>
         <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.min(currentPage + 1, totalPages))} disabled={currentPage === totalPages}>
           <ThemedText>Next</ThemedText>
+        </Pressable>
+      </ThemedView>
+      <ThemedView style={styles.modifiers}>
+        <Pressable
+          onPress={() => setModifiersActive((prev) => !prev)}
+          style={[styles.toggleButton, modifiersActive ? styles.active : styles.inactive]}
+        >
+          <ThemedText>{modifiersActive ? 'Toggle Modifiers Off' : 'Toggle Modifiers On'}</ThemedText>
         </Pressable>
       </ThemedView>
     </View>
@@ -231,13 +259,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: 'gray',
   },
   paginationButton: {
-    padding: 10,
-    borderRadius: 5,
+    padding: 5,
     marginHorizontal: 5,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modifiers: {
+    width: '100%',
+    alignItems: 'center',
+    padding: 10,
+  },
+  toggleButton: {
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#007AFF',
+    width: '50%',
+  },
+  active: {
+    backgroundColor: 'gray',
+  },
+  inactive: {
+    backgroundColor: '#007AFF',
   },
 });
