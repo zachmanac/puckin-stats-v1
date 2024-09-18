@@ -1,17 +1,11 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { fetchTeam } from '@/supabaseCalls/getRequests';
 import { addPlayerToTeamDB, removePlayerFromTeamDB } from '@/supabaseCalls/postRequests';
-
-interface TeamContextType {
-  team: number[]; // Array of player IDs
-  addPlayerToTeam: (playerId: number) => Promise<void>;
-  removePlayerFromTeam: (playerId: number) => Promise<void>;
-  fetchTeam: () => Promise<number[]>;
-}
+import { TeamContextType } from '@/types';
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined);
 
-interface TeamProviderProps {
+type TeamProviderProps = {
   children: ReactNode;
 }
 

@@ -6,16 +6,7 @@ import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
-
-type PlayersTableProps = {
-  players: Player[];
-  totalPlayers: number;
-  currentPage: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-  hiddenPlayers: number[];
-  setHiddenPlayers: (hiddenPlayers: number[]) => void;
-};
+import { PlayersTableProps } from '@/types';
 
 export default function PlayersTable({
   players,
@@ -27,7 +18,7 @@ export default function PlayersTable({
   setHiddenPlayers,
 }: PlayersTableProps) {
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
-  const [modifiersActive, setModifiersActive] = useState<boolean>(true);
+  const [modifiersActive, setModifiersActive] = useState<boolean>(false);
 
   const { modifiers } = useModifiersContext();
 
@@ -71,22 +62,22 @@ export default function PlayersTable({
 
     const gamesPlayed = item.playerStats.gamesPlayed;
 
-    const structuredGoals = Math.round(item.playerStats.goals * (modifiersActive ? parseFloat(goalModifier.toString()) : 1));
-    const structuredAssists = Math.round(item.playerStats.assists * (modifiersActive ? parseFloat(assistModifier.toString()) : 1));
+    const structuredGoals = Math.round(item.playerStats.goals * (modifiersActive && goalModifier.enabled ? parseFloat(goalModifier.value.toString()) : 1));
+    const structuredAssists = Math.round(item.playerStats.assists * (modifiersActive && assistModifier.enabled ? parseFloat(assistModifier.value.toString()) : 1));
     const structuredPoints = structuredGoals + structuredAssists;
     const structuredPointsPerGame = item.playerStats.pointsPerGame.toFixed(2);
     const structuredShootingPercent = (item.playerStats.shootingPercent * 100).toFixed(2);
     const structuredMinutes = Math.floor(item.playerStats.timeOnIcePerGame / 60);
     const structuredSeconds = String(Math.round((item.playerStats.timeOnIcePerGame / 60 % 1) * 60)).padStart(2, '0');
-    const structuredSHG = Math.round(item.playerStats.shortHandedGoals * (modifiersActive ? parseFloat(SHGModifier.toString()) : 1));
-    const structuredGWG = Math.round(item.playerStats.gameWinningGoals * (modifiersActive ? parseFloat(GWGModifier.toString()) : 1));
+    const structuredSHG = Math.round(item.playerStats.shortHandedGoals * (modifiersActive && SHGModifier.enabled ? parseFloat(SHGModifier.value.toString()) : 1));
+    const structuredGWG = Math.round(item.playerStats.gameWinningGoals * (modifiersActive && GWGModifier.enabled ? parseFloat(GWGModifier.value.toString()) : 1));
 
     // Projected column calculation, based off of 82 games played
     const gamesProrated = gamesPlayed > 0 ? (82 / gamesPlayed) : 1;
-    const projectedGoals = structuredGoals * gamesProrated;
-    const projectedAssists = structuredAssists * gamesProrated;
-    const projectedSHG = structuredSHG * gamesProrated;
-    const projectedGWG = structuredGWG * gamesProrated;
+    const projectedGoals = modifiersActive && goalModifier.enabled ? structuredGoals * gamesProrated : 0;
+    const projectedAssists = modifiersActive && assistModifier.enabled ? structuredAssists * gamesProrated : 0;
+    const projectedSHG = modifiersActive && SHGModifier.enabled ? structuredSHG * gamesProrated : 0;
+    const projectedGWG = modifiersActive && GWGModifier.enabled ? structuredGWG * gamesProrated : 0;
     const projectedStats =  Math.round(projectedGoals + projectedAssists + projectedSHG + projectedGWG)
 
     return (

@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Modifiers } from '@/types';
-
-type ModifiersContextType = {
-  modifiers: Modifiers;
-  setModifiers: React.Dispatch<React.SetStateAction<Modifiers>>;
-};
+import { Modifiers, ModifiersContextType } from '@/types';
 
 const ModifiersContext = createContext<ModifiersContextType | undefined>(undefined);
 
@@ -18,10 +13,10 @@ export const useModifiersContext = () => {
 
 export const ModifiersContextProvider = ({ children }: { children: ReactNode }) => {
   const [modifiers, setModifiers] = useState<Modifiers>({
-    goalModifier: '1',
-    assistModifier: '1',
-    GWGModifier: '1',
-    SHGModifier: '1',
+    goalModifier: { value: '1', enabled: false },
+    assistModifier: { value: '1', enabled: false },
+    GWGModifier: { value: '0', enabled: false },
+    SHGModifier: { value: '0', enabled: false },
   });
 
   return (

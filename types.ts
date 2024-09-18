@@ -24,8 +24,42 @@ export type CheckboxProps = {
 };
 
 export type Modifiers = {
-  goalModifier: string | number;
-  assistModifier: string | number;
-  GWGModifier: string | number;
-  SHGModifier: string | number;
+  goalModifier: {
+    value: string | number;
+    enabled: boolean;
+  };
+  assistModifier: {
+    value: string | number;
+    enabled: boolean;
+  };
+  GWGModifier: {
+    value: string | number;
+    enabled: boolean;
+  };
+  SHGModifier: {
+    value: string | number;
+    enabled: boolean;
+  };
 };
+
+export type PlayersTableProps = {
+  players: Player[];
+  totalPlayers: number;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  hiddenPlayers: number[];
+  setHiddenPlayers: (hiddenPlayers: number[]) => void;
+};
+
+export type ModifiersContextType = {
+  modifiers: Modifiers;
+  setModifiers: React.Dispatch<React.SetStateAction<Modifiers>>;
+};
+
+export type TeamContextType = {
+  team: number[]; // Array of player IDs
+  addPlayerToTeam: (playerId: number) => Promise<void>;
+  removePlayerFromTeam: (playerId: number) => Promise<void>;
+  fetchTeam: () => Promise<number[]>;
+}
