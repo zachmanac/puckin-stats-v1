@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { ScrollView, View, Pressable, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { ScrollView, View, Pressable, FlatList, StyleSheet, Animated } from 'react-native';
 import { Player } from '@/types';
 import Checkbox from './Checkbox';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
@@ -22,7 +22,6 @@ export default function PlayersTable({
 
   const { modifiers } = useModifiersContext();
 
-
   const totalPages = Math.ceil(totalPlayers / pageSize);
 
   const { addPlayerToTeam } = useTeamContext();
@@ -33,6 +32,10 @@ export default function PlayersTable({
         ? prevSelected.filter(id => id !== playerId)
         : [...prevSelected, playerId]
     );
+  };
+
+  const handleLongPress = (playerId: number) => {
+    handleCheckboxChange(playerId);
   };
 
   const removeSelectedPlayers = () => {
@@ -81,25 +84,32 @@ export default function PlayersTable({
     const projectedStats =  Math.round(projectedGoals + projectedAssists + projectedSHG + projectedGWG)
 
     return (
-      <ThemedView style={[styles.row, selectedPlayers.includes(item.playerId) && styles.selectedRow]}>
-        <Checkbox
-          checked={selectedPlayers.includes(item.playerId)}
-          onChange={() => handleCheckboxChange(item.playerId)}
-        />
-        <ThemedText style={[styles.cell, styles.cellName]}>{item.name}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{projectedStats}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{item.position}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{gamesPlayed}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGoals}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredAssists}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPoints}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPointsPerGame}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{item.playerStats.shots}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredShootingPercent}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredMinutes}:{structuredSeconds}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredSHG}</ThemedText>
-        <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGWG}</ThemedText>
-      </ThemedView>
+      <Pressable
+        onLongPress={() => handleLongPress(item.playerId)}
+        style={({ pressed }) => [
+          pressed && styles.rowPressed
+        ]}
+      >
+        <ThemedView style={[styles.row, selectedPlayers.includes(item.playerId) && styles.selectedRow]}>
+          <Checkbox
+            checked={selectedPlayers.includes(item.playerId)}
+            onChange={() => handleCheckboxChange(item.playerId)}
+          />
+          <ThemedText style={[styles.cell, styles.cellName]}>{item.name}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{projectedStats}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{item.position}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{gamesPlayed}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGoals}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredAssists}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPoints}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredPointsPerGame}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{item.playerStats.shots}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredShootingPercent}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellLongNumbers]}>{structuredMinutes}:{structuredSeconds}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredSHG}</ThemedText>
+          <ThemedText style={[styles.cell, styles.cellStats]}>{structuredGWG}</ThemedText>
+        </ThemedView>
+      </Pressable>
     );
   }, [selectedPlayers, handleCheckboxChange, hiddenPlayers, modifiers]);
 
@@ -276,5 +286,8 @@ const styles = StyleSheet.create({
   },
   inactive: {
     backgroundColor: '#007AFF',
+  },
+  rowPressed: {
+    opacity: 0.5,
   },
 });
