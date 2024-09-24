@@ -1,12 +1,14 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import { ScrollView, View, Pressable, FlatList, StyleSheet, Animated } from 'react-native';
+import React, { useState, useMemo, useCallback } from 'react';
+import { ScrollView, View, Pressable, FlatList, StyleSheet } from 'react-native';
 import { Player } from '@/types';
 import Checkbox from './Checkbox';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
+import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
-import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
 import { PlayersTableProps } from '@/types';
+import { fetchIndividualPlayersStatsAllSeasons } from '@/supabaseCalls/getRequests';
+import PlayerStatsModal from './PlayerStatsModal';
 
 export default function PlayersTable({
   players,
@@ -17,10 +19,11 @@ export default function PlayersTable({
   hiddenPlayers,
   setHiddenPlayers,
 }: PlayersTableProps) {
+  const [selectedPlayer, setSelectedPlayer] = useState<Player[] | null>(null);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
-  const [modifiersActive, setModifiersActive] = useState<boolean>(false);
 
-  const { modifiers } = useModifiersContext();
+  const { modifiers, modifiersActive, setModifiersActive } = useModifiersContext();
 
   const totalPages = Math.ceil(totalPlayers / pageSize);
 
@@ -32,6 +35,17 @@ export default function PlayersTable({
         ? prevSelected.filter(id => id !== playerId)
         : [...prevSelected, playerId]
     );
+  };
+
+  const handleSelectPlayer = async (playerId: number) => {
+    const individualPlayersStats = await fetchIndividualPlayersStatsAllSeasons(playerId);
+    setSelectedPlayer(individualPlayersStats);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedPlayer(null);
   };
 
   const handleLongPress = (playerId: number) => {
@@ -85,6 +99,13 @@ export default function PlayersTable({
 
     return (
       <Pressable
+        onPress={() => {
+          if (selectedPlayers.length === 0) {
+            handleSelectPlayer(item.playerId); // Only trigger if no checkboxes are selected
+          } else {
+            return;
+          }
+        }}
         onLongPress={() => handleLongPress(item.playerId)}
         style={({ pressed }) => [
           pressed && styles.rowPressed
@@ -118,7 +139,7 @@ export default function PlayersTable({
       {selectedPlayers.length > 0 && (
         <ThemedView style={styles.dropdownMenu}>
           <Pressable style={styles.menuButton} onPress={removeSelectedPlayers}>
-            <ThemedText style={styles.menuButtonText}>Remove Selected</ThemedText>
+            <ThemedText style={styles.menuButtonText}>Remove From List</ThemedText>
           </Pressable>
           <Pressable style={styles.menuButton} onPress={addSelectedPlayersToTeam}>
             <ThemedText style={styles.menuButtonText}>Add to Team</ThemedText>
@@ -174,6 +195,7 @@ export default function PlayersTable({
           <ThemedText>Next</ThemedText>
         </Pressable>
       </ThemedView>
+      {/* Modifier toggle */}
       <ThemedView style={styles.modifiers}>
         <Pressable
           onPress={() => setModifiersActive((prev) => !prev)}
@@ -182,6 +204,13 @@ export default function PlayersTable({
           <ThemedText>{modifiersActive ? 'Toggle Modifiers Off' : 'Toggle Modifiers On'}</ThemedText>
         </Pressable>
       </ThemedView>
+
+      {/* Player Stats Modal */}
+      <PlayerStatsModal
+        selectedPlayer={selectedPlayer}
+        modalVisible={modalVisible}
+        onClose={handleCloseModal}
+      />
     </View>
   );
 }

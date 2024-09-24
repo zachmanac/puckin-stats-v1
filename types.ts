@@ -52,9 +52,17 @@ export type PlayersTableProps = {
   setHiddenPlayers: (hiddenPlayers: number[]) => void;
 };
 
+export type PlayerStatsModalProps = {
+  modalVisible: boolean;
+  selectedPlayer: Player[] | null;
+  onClose: () => void;
+};
+
 export type ModifiersContextType = {
   modifiers: Modifiers;
   setModifiers: React.Dispatch<React.SetStateAction<Modifiers>>;
+  modifiersActive: boolean;
+  setModifiersActive: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 export type TeamContextType = {

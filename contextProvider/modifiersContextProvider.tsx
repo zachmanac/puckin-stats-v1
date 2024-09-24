@@ -19,8 +19,10 @@ export const ModifiersContextProvider = ({ children }: { children: ReactNode }) 
     SHGModifier: { value: '0', enabled: false },
   });
 
+  const [modifiersActive, setModifiersActive] = useState<boolean>(false);
+
   return (
-    <ModifiersContext.Provider value={{ modifiers, setModifiers }}>
+    <ModifiersContext.Provider value={{ modifiers, setModifiers, modifiersActive, setModifiersActive }}>
       {children}
     </ModifiersContext.Provider>
   );
