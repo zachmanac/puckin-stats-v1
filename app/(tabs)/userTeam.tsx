@@ -1,15 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Pressable } from 'react-native';
 import { Player } from '@/types';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { fetchPlayerIdsFromTeam, fetchTeamWithStats } from '@/supabaseCalls/getRequests';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import Checkbox from '@/components/Checkbox';
 
 const UserTeamTab = () => {
   const [players, setPlayers] = useState<Player[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
 
-  const { team } = useTeamContext();
+  const { team, removePlayerFromTeam } = useTeamContext();
+
+  const handleCheckboxChange = (playerId: number) => {
+    setSelectedPlayers((prevSelected) =>
+      prevSelected.includes(playerId)
+        ? prevSelected.filter(id => id !== playerId)
+        : [...prevSelected, playerId]
+    );
+  };
+
+  const removeSelectedPlayersFromTeam = async () => {
+    for (const playerId of selectedPlayers) {
+      await removePlayerFromTeam(playerId);
+    }
+    setSelectedPlayers([]);
+  };
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -25,15 +42,23 @@ const UserTeamTab = () => {
     fetchTeam();
   }, [team]);
 
-
   return (
     <ThemedView style={styles.container}>
+
+    {selectedPlayers.length > 0 && (
+      <ThemedView style={styles.dropdownMenu}>
+        <Pressable style={styles.menuButton} onPress={removeSelectedPlayersFromTeam}>
+          <ThemedText style={styles.menuButtonText}>Remove From Team</ThemedText>
+        </Pressable>
+      </ThemedView>
+    )}
+
       <ScrollView horizontal style={styles.tableContainer}>
         {/* Columns */}
         <ThemedView style={styles.table}>
           <ThemedView style={[styles.row, styles.header]}>
+          <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>{/* Checkbox column */}</ThemedText>
             <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
-            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>projected</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GP</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>G</ThemedText>
@@ -50,8 +75,11 @@ const UserTeamTab = () => {
           {/* Rows */}
           {players.map((player: Player, index: number) => (
             <ThemedView key={index} style={styles.row}>
+              <Checkbox
+                checked={selectedPlayers.includes(player.playerId)}
+                onChange={() => handleCheckboxChange(player.playerId)}
+              />
               <ThemedText style={[styles.cell, styles.cellName]}>{player.name}</ThemedText>
-              <ThemedText style={[styles.cell, styles.cellStats]}>projected</ThemedText>
               <ThemedText style={[styles.cell, styles.cellStats]}>{player.position}</ThemedText>
               <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.gamesPlayed}</ThemedText>
               <ThemedText style={[styles.cell, styles.cellStats]}>{player.playerStats.goals}</ThemedText>
@@ -124,6 +152,28 @@ const styles = StyleSheet.create({
   cellLongNumbers: {
     width: 35,
     textAlign: 'center',
+  },
+  dropdownMenu: {
+    flexDirection: 'row',
+    backgroundColor: '#007bff',
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    alignContent: 'center',
+    justifyContent: 'space-evenly',
+    height: 50,
+  },
+  menuButton: {
+    backgroundColor: 'gray',
+    width: 150,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    height: '70%',
+    borderRadius: 10,
+  },
+  menuButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    padding: 5,
   },
 });
 
