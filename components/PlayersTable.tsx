@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ScrollView, View, Pressable, FlatList, StyleSheet } from 'react-native';
-import { Player } from '@/types';
+import { Player, PlayerStats, Modifiers } from '@/types';
 import Checkbox from './Checkbox';
 import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
@@ -22,12 +22,14 @@ export default function PlayersTable({
   const [selectedPlayer, setSelectedPlayer] = useState<Player[] | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
+  const [sortColumn, setSortColumn] = useState<string>('points');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   const { modifiers, modifiersActive, setModifiersActive } = useModifiersContext();
 
   const totalPages = Math.ceil(totalPlayers / pageSize);
 
-  const { addPlayerToTeam } = useTeamContext();
+  const { addPlayerToTeam, team } = useTeamContext();
 
   const handleCheckboxChange = (playerId: number) => {
     setSelectedPlayers((prevSelected) =>
@@ -69,9 +71,52 @@ export default function PlayersTable({
     setSelectedPlayers([]);
   };
 
+  const handleSort = (column: string) => {
+    const direction = sortColumn === column && sortDirection === 'desc' ? 'asc' : 'desc';
+    setSortColumn(column);
+    setSortDirection(direction);
+  };
+
+  const calculateProjectedStats = (playerStats: PlayerStats, modifiersActive: boolean, modifiers: Modifiers): number => {
+    const gamesProrated = playerStats.gamesPlayed > 0 ? (82 / playerStats.gamesPlayed) : 1;
+
+    const goals = Math.round(playerStats.goals * (modifiersActive && modifiers.goalModifier.enabled ? parseFloat(modifiers.goalModifier.value.toString()) : 0));
+    const assists = Math.round(playerStats.assists * (modifiersActive && modifiers.assistModifier.enabled ? parseFloat(modifiers.assistModifier.value.toString()) : 0));
+    const SHG = Math.round(playerStats.shortHandedGoals * (modifiersActive && modifiers.SHGModifier.enabled ? parseFloat(modifiers.SHGModifier.value.toString()) : 0));
+    const GWG = Math.round(playerStats.gameWinningGoals * (modifiersActive && modifiers.GWGModifier.enabled ? parseFloat(modifiers.GWGModifier.value.toString()) : 0));
+
+    return Math.round((goals + assists + SHG + GWG) * gamesProrated);
+  };
+  
   const filteredPlayers = useMemo(() => {
-    return players.filter((player) => !hiddenPlayers.includes(player.playerId));
-  }, [players, hiddenPlayers]);
+    return players.filter((player) => !hiddenPlayers.includes(player.playerId) && !team.includes(player.playerId));
+  }, [players, hiddenPlayers, team]);
+
+  const sortedPlayers = useMemo(() => {
+    return [...filteredPlayers].sort((a, b) => {
+      let aValue = 0;
+      let bValue = 0;
+  
+      if (sortColumn === 'points') {
+        aValue = a.playerStats.points;
+        bValue = b.playerStats.points;
+      } else if (sortColumn === 'projectedStats') {
+        const aProjectedStats = calculateProjectedStats(a.playerStats, modifiersActive, modifiers);
+        const bProjectedStats = calculateProjectedStats(b.playerStats, modifiersActive, modifiers);
+        
+        aValue = aProjectedStats;
+        bValue = bProjectedStats;
+      }
+  
+      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+  }, [filteredPlayers, sortColumn, sortDirection, modifiers, modifiersActive]);
+
+  const paginatedPlayers = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    return sortedPlayers.slice(start, end);
+  }, [sortedPlayers, currentPage, pageSize]);
 
   // Renders individual player row
   const renderPlayer = useCallback(({ item }: { item: Player }) => {
@@ -90,12 +135,7 @@ export default function PlayersTable({
     const structuredGWG = Math.round(item.playerStats.gameWinningGoals * (modifiersActive && GWGModifier.enabled ? parseFloat(GWGModifier.value.toString()) : 1));
 
     // Projected column calculation, based off of 82 games played
-    const gamesProrated = gamesPlayed > 0 ? (82 / gamesPlayed) : 1;
-    const projectedGoals = modifiersActive && goalModifier.enabled ? structuredGoals * gamesProrated : 0;
-    const projectedAssists = modifiersActive && assistModifier.enabled ? structuredAssists * gamesProrated : 0;
-    const projectedSHG = modifiersActive && SHGModifier.enabled ? structuredSHG * gamesProrated : 0;
-    const projectedGWG = modifiersActive && GWGModifier.enabled ? structuredGWG * gamesProrated : 0;
-    const projectedStats =  Math.round(projectedGoals + projectedAssists + projectedSHG + projectedGWG)
+    const projectedStats = calculateProjectedStats(item.playerStats, modifiersActive, modifiers);
 
     return (
       <Pressable
@@ -160,12 +200,15 @@ export default function PlayersTable({
           <ThemedView style={[styles.row, styles.header]}>
             <ThemedText style={[styles.cell, styles.cellId, styles.headerText]}>{/* checkbox header*/}</ThemedText>
             <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
-            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Proj. Stats</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]} onPress={() => handleSort('projectedStats')}
+            >Proj. Stats {sortColumn === 'projectedStats' && (sortDirection === 'asc' ? '↑' : '↓')}</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>GP</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>G</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>A</ThemedText>
-            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts</ThemedText>
+            <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]} onPress={() => handleSort('points')}>
+              Pts {sortColumn === 'points' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pts/PG</ThemedText>
             <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shots</ThemedText>
             <ThemedText style={[styles.cell, styles.cellLongNumbers, styles.headerText]}>Shot %</ThemedText>
@@ -176,7 +219,7 @@ export default function PlayersTable({
 
           {/* Rows */}
           <FlatList
-            data={filteredPlayers}
+            data={paginatedPlayers}
             renderItem={renderPlayer}
             keyExtractor={item => item.playerId.toString()}
             ListEmptyComponent={<ThemedText>No players available.</ThemedText>}
@@ -195,6 +238,7 @@ export default function PlayersTable({
           <ThemedText>Next</ThemedText>
         </Pressable>
       </ThemedView>
+
       {/* Modifier toggle */}
       <ThemedView style={styles.modifiers}>
         <Pressable

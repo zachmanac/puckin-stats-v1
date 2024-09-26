@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     backgroundColor: 'gray',
-    width: 150,
     alignSelf: 'center',
     justifyContent: 'center',
     height: '70%',
