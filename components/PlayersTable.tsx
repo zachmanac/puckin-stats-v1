@@ -9,6 +9,7 @@ import { ThemedView } from './ThemedView';
 import { PlayersTableProps } from '@/types';
 import { fetchIndividualPlayersStatsAllSeasons } from '@/supabaseCalls/getRequests';
 import PlayerStatsModal from './PlayerStatsModal';
+import PositionDropdown from './PositionDropdown';
 
 export default function PlayersTable({
   players,
@@ -24,6 +25,7 @@ export default function PlayersTable({
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
   const [sortColumn, setSortColumn] = useState<string>('points');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [positionFilter, setPositionFilter] = useState<'All Players' | 'Forwards' | 'Defense'>('All Players');
 
   const { modifiers, modifiersActive, setModifiersActive } = useModifiersContext();
 
@@ -89,8 +91,15 @@ export default function PlayersTable({
   };
   
   const filteredPlayers = useMemo(() => {
-    return players.filter((player) => !hiddenPlayers.includes(player.playerId) && !team.includes(player.playerId));
-  }, [players, hiddenPlayers, team]);
+    return players.filter((player) => {
+      const isHidden = hiddenPlayers.includes(player.playerId) || team.includes(player.playerId);
+      const isPositionFiltered = (positionFilter === 'All Players') ||
+        (positionFilter === 'Forwards' && player.position !== 'D') ||
+        (positionFilter === 'Defense' && player.position === 'D');
+  
+      return !isHidden && isPositionFiltered;
+    });
+  }, [players, hiddenPlayers, team, positionFilter]);
 
   const sortedPlayers = useMemo(() => {
     return [...filteredPlayers].sort((a, b) => {
@@ -177,7 +186,7 @@ export default function PlayersTable({
   return (
     <View>
       {selectedPlayers.length > 0 && (
-        <ThemedView style={styles.dropdownMenu}>
+        <ThemedView style={styles.selectedMenu}>
           <Pressable style={styles.menuButton} onPress={removeSelectedPlayers}>
             <ThemedText style={styles.menuButtonText}>Remove From List</ThemedText>
           </Pressable>
@@ -187,7 +196,7 @@ export default function PlayersTable({
         </ThemedView>
       )}
       {selectedPlayers.length === 0 && hiddenPlayers.length > 0 && (
-        <ThemedView style={styles.dropdownMenu}>
+        <ThemedView style={styles.selectedMenu}>
           <Pressable style={styles.menuButton} onPress={unhideAllPlayers}>
             <ThemedText style={styles.menuButtonText}>Unhide All Players</ThemedText>
           </Pressable>
@@ -230,17 +239,32 @@ export default function PlayersTable({
 
       {/* Pagination */}
       <ThemedView style={styles.pagination}>
-        <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.max(currentPage - 1, 1))} disabled={currentPage === 1}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.paginationButton,
+            pressed && styles.buttonPressed
+          ]}
+          onPress={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
           <ThemedText>Previous</ThemedText>
         </Pressable>
         <ThemedText style={styles.paginationButton}>{currentPage} / {totalPages}</ThemedText>
-        <Pressable style={styles.paginationButton} onPress={() => onPageChange(Math.min(currentPage + 1, totalPages))} disabled={currentPage === totalPages}>
+        <Pressable 
+          style={({ pressed }) => [
+            styles.paginationButton,
+            pressed && styles.buttonPressed
+            ]}
+          onPress={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
           <ThemedText>Next</ThemedText>
         </Pressable>
       </ThemedView>
 
-      {/* Modifier toggle */}
-      <ThemedView style={styles.modifiers}>
+      {/* Position filter dropdown and Modifier toggle */}
+      <ThemedView style={styles.bottomButtonsContainer}>
+        <PositionDropdown selectedPosition={positionFilter} onSelectPosition={setPositionFilter} />
         <Pressable
           onPress={() => setModifiersActive((prev) => !prev)}
           style={[styles.toggleButton, modifiersActive ? styles.active : styles.inactive]}
@@ -307,7 +331,7 @@ const styles = StyleSheet.create({
   selectedRow: {
     backgroundColor: 'gray',
   },
-  dropdownMenu: {
+  selectedMenu: {
     flexDirection: 'row',
     backgroundColor: '#007bff',
     borderBottomColor: '#ccc',
@@ -340,19 +364,22 @@ const styles = StyleSheet.create({
   paginationButton: {
     padding: 5,
     marginHorizontal: 5,
+    borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  modifiers: {
+  bottomButtonsContainer: {
+    flexDirection: 'row',
     width: '100%',
-    alignItems: 'center',
     padding: 10,
+    gap: 10,
   },
   toggleButton: {
     padding: 10,
     borderRadius: 5,
     backgroundColor: '#007AFF',
     width: '50%',
+    maxHeight: 43,
   },
   active: {
     backgroundColor: 'gray',
@@ -363,4 +390,7 @@ const styles = StyleSheet.create({
   rowPressed: {
     opacity: 0.5,
   },
+  buttonPressed: {
+    backgroundColor: 'gray',
+  }
 });
