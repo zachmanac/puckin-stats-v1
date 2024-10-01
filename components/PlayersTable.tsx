@@ -6,6 +6,7 @@ import { useTeamContext } from '@/contextProvider/userTeamContextProvider';
 import { useModifiersContext } from '@/contextProvider/modifiersContextProvider';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import { ThemedTextInput } from './ThemedTextInput';
 import { PlayersTableProps } from '@/types';
 import { fetchIndividualPlayersStatsAllSeasons } from '@/supabaseCalls/getRequests';
 import PlayerStatsModal from './PlayerStatsModal';
@@ -26,6 +27,7 @@ export default function PlayersTable({
   const [sortColumn, setSortColumn] = useState<string>('points');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [positionFilter, setPositionFilter] = useState<'All Players' | 'Forwards' | 'Defense'>('All Players');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const { modifiers, modifiersActive, setModifiersActive } = useModifiersContext();
 
@@ -96,10 +98,12 @@ export default function PlayersTable({
       const isPositionFiltered = (positionFilter === 'All Players') ||
         (positionFilter === 'Forwards' && player.position !== 'D') ||
         (positionFilter === 'Defense' && player.position === 'D');
+
+      const nameFilter = player.name.toLowerCase().includes(searchQuery.toLowerCase());
   
-      return !isHidden && isPositionFiltered;
+      return !isHidden && isPositionFiltered && nameFilter;
     });
-  }, [players, hiddenPlayers, team, positionFilter]);
+  }, [players, hiddenPlayers, team, positionFilter, searchQuery]);
 
   const sortedPlayers = useMemo(() => {
     return [...filteredPlayers].sort((a, b) => {
@@ -203,12 +207,20 @@ export default function PlayersTable({
         </ThemedView>
       )}
 
-      <ScrollView horizontal style={styles.tableContainer}>
+      <ScrollView horizontal keyboardShouldPersistTaps="handled" style={styles.tableContainer}>
         {/* Columns */}
         <ThemedView style={styles.table}>
           <ThemedView style={[styles.row, styles.header]}>
             <ThemedText style={[styles.cell, styles.cellId, styles.headerText]}>{/* checkbox header*/}</ThemedText>
-            <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
+            <ThemedView style={[styles.cell, styles.cellName]}>
+              <ThemedText style={[styles.cell, styles.cellName, styles.headerText]}>Name</ThemedText>
+              <ThemedTextInput
+                placeholder="Name Search"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                style={styles.searchInput}
+              />
+            </ThemedView>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]} onPress={() => handleSort('projectedStats')}
             >Proj. Stats {sortColumn === 'projectedStats' && (sortDirection === 'asc' ? '↑' : '↓')}</ThemedText>
             <ThemedText style={[styles.cell, styles.cellStats, styles.headerText]}>Pos</ThemedText>
@@ -231,7 +243,7 @@ export default function PlayersTable({
             data={paginatedPlayers}
             renderItem={renderPlayer}
             keyExtractor={item => item.playerId.toString()}
-            ListEmptyComponent={<ThemedText>No players available.</ThemedText>}
+            ListEmptyComponent={<ThemedText style={{ paddingLeft: 10 }}>No players available.</ThemedText>}
             initialNumToRender={15}
           />
         </ThemedView>
@@ -318,7 +330,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cellName: {
-    width: 120,
+    width: 125,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 2,
   },
   cellStats: {
     width: 30,
@@ -392,5 +407,12 @@ const styles = StyleSheet.create({
   },
   buttonPressed: {
     backgroundColor: 'gray',
-  }
+  },
+  searchInput: {
+    height: 30,
+    width: 85,
+    padding: 5,
+    fontSize: 12,
+    textAlign: 'left',
+  },
 });
