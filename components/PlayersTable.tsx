@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   cellName: {
-    width: 125,
+    width: 130,
     flexDirection: 'row',
     alignItems: 'center',
     paddingRight: 2,

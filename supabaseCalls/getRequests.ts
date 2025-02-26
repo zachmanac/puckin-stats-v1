@@ -90,7 +90,7 @@ export const fetchTeamWithStats = async (playerIds: number[]) => {
       )
     `)
     .in('player_id', playerIds)
-    .eq('season_id', 20222023);
+    .eq('season_id', 20232024);
 
   if (error) {
     console.error('Error fetching player stats and details:', error);
