@@ -31,6 +31,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9e1aff3d-5ee9-4538-9d76-6708c722b4cd"
+      }
+    },
+    "owner": "zachmanac",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9e1aff3d-5ee9-4538-9d76-6708c722b4cd"
     }
   }
 }
